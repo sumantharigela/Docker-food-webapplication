@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>🍔 FoodieExpress · Swiggy/Zomato Style Restaurant Discovery</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
+        }
+
+        body {
+            background: #f8f9fc;
+            color: #1e293b;
+        }
+
+        /* header */
+        .app-header {
+            background: linear-gradient(135deg, #ff7e5f, #feb47b);
+            padding: 1rem 2rem;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: white;
+            letter-spacing: -0.5px;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .logo p {
+            font-size: 0.7rem;
+            color: #fff3e0;
+        }
+
+        .cart-icon {
+            background: white;
+            padding: 0.5rem 1.2rem;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 700;
+            color: #ff5e3a;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .cart-icon:hover {
+            transform: scale(1.02);
+            background: #fff8f0;
+        }
+
+        /* main container */
+        .container {
+            max-width: 1400px;
+            margin: 1.5rem auto;
+            padding: 0 1.5rem;
+        }
+
+        /* restaurant grid (first page) */
+        .restaurant-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+
+        .restaurant-card {
+            background: white;
+            border-radius: 2rem;
+            overflow: hidden;
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.08);
+            transition: all 0.25s ease;
+            cursor: pointer;
+            border: 1px solid #ffe2d4;
+        }
+
+        .restaurant-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 30px rgba(0, 0, 0, 0.12);
+            border-color: #ffaa88;
+        }
+
+        .restaurant-img {
+            height: 170px;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        .restaurant-info {
+            padding: 1.2rem;
+        }
+
+        .restaurant-name {
+            font-size: 1.4rem;
+            font-weight: 800;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .rating {
+            background: #2e7d32;
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .cuisine {
+            color: #5b6e8c;
+            font-size: 0.85rem;
+            margin: 0.3rem 0;
+        }
+
+        .price {
+            font-weight: 700;
+            color: #ff6b3d;
+        }
+
+        /* menu panel (when restaurant clicked) */
+        .menu-view {
+            background: white;
+            border-radius: 2rem;
+            padding: 1.8rem;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .back-button {
+            background: #f1f3f7;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            transition: 0.2s;
+        }
+
+        .resto-header {
+            margin-bottom: 2rem;
+            border-bottom: 2px dashed #ffe0cc;
+            padding-bottom: 1rem;
+        }
+
+        .menu-items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.2rem;
+        }
+
+        .menu-card {
+            background: #fefaf7;
+            border-radius: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.2rem;
+            border: 1px solid #ffe0d0;
+            transition: 0.2s;
+        }
+
+        .menu-details h4 {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .menu-details p {
+            font-size: 0.75rem;
+            color: #6c757d;
+            margin: 0.2rem 0;
+        }
+
+        .price-tag {
+            font-weight: 800;
+            color: #ff5e3a;
+        }
+
+        .add-btn {
+            background: #ff7e5f;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 40px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+
+        .add-btn:hover {
+            background: #ff5a3a;
+            transform: scale(1.02);
+        }
+
+        /* cart sidebar modal */
+        .cart-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            z-index: 200;
+            display: flex;
+            justify-content: flex-end;
+            visibility: hidden;
+            opacity: 0;
+            transition: 0.2s;
+        }
+
+        .cart-sidebar {
+            background: white;
+            width: 100%;
+            max-width: 420px;
+            height: 100%;
+            padding: 1.5rem;
+            overflow-y: auto;
+            box-shadow: -5px 0 25px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #ffd5c2;
+        }
+
+        .cart-items-list {
+            flex: 1;
+            margin: 1rem 0;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.7rem 0;
+            border-bottom: 1px solid #f0e2d8;
+        }
+
+        .cart-total {
+            font-weight: 800;
+            font-size: 1.3rem;
+            border-top: 2px solid #ffb085;
+            padding-top: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .checkout-btn {
+            background: linear-gradient(95deg, #ff7e5f, #feb47b);
+            width: 100%;
+            padding: 0.9rem;
+            border: none;
+            border-radius: 60px;
+            font-weight: 800;
+            color: white;
+            margin-top: 1rem;
+            cursor: pointer;
+        }
+
+        .empty-cart {
+            text-align: center;
+            color: #9aa6b9;
+            margin-top: 2rem;
+        }
+
+        .close-cart {
+            background: #eef2ff;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0.3rem 0.7rem;
+            border-radius: 50%;
+        }
+
+        .toast-msg {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: #ffefcf;
+            padding: 0.6rem 1.4rem;
+            border-radius: 60px;
+            font-weight: 500;
+            z-index: 300;
+            font-size: 0.85rem;
+            backdrop-filter: blur(10px);
+            pointer-events: none;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+
+        .badge {
+            background: #ff5e3a;
+            border-radius: 30px;
+            padding: 0.1rem 0.6rem;
+            font-size: 0.7rem;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-header">
+    <div class="logo">
+        <h1>🍕 FoodieExpress</h1>
+        <p>Craving? Discover & order</p>
+    </div>
+    <div class="cart-icon" id="cartIconBtn">
+        🛒 Cart <span id="cartCountBadge">0</span>
+    </div>
+</div>
+
+<div class="container" id="appContainer">
+    <!-- restaurants list view (default) -->
+    <div id="restaurantView">
+        <h2 style="margin-bottom: 1rem;">✨ Restaurants near you</h2>
+        <div class="restaurant-grid" id="restaurantsGrid"></div>
+    </div>
+
+    <!-- menu view (hidden initially) -->
+    <div id="menuView" style="display: none;"></div>
+</div>
+
+<!-- cart modal overlay -->
+<div id="cartOverlay" class="cart-overlay">
+    <div class="cart-sidebar">
+        <div class="cart-header">
+            <span>🛍️ Your Cart</span>
+            <button class="close-cart" id="closeCartBtn">✖</button>
+        </div>
+        <div id="cartItemsList" class="cart-items-list">
+            <div class="empty-cart">Your cart is empty 🍽️</div>
+        </div>
+        <div class="cart-total" id="cartTotalPrice">Total: ₹0</div>
+        <button class="checkout-btn" id="checkoutBtn">Proceed to Checkout 🚀</button>
+    </div>
+</div>
+
+<script>
+    // ---------- MOCK DATA (Restaurants + Menu Items) Swiggy/Zomato style ----------
+    const restaurants = [
+        {
+            id: 1,
+            name: "🍕 Pizza Heaven",
+            cuisine: "Italian, Fast Food",
+            rating: 4.5,
+            priceForTwo: 450,
+            image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=200&fit=crop",
+            menu: [
+                { id: 101, name: "Margherita Pizza", description: "Classic cheese & tomatoes", price: 299, veg: true },
+                { id: 102, name: "Pepperoni Blast", description: "Spicy pepperoni, mozzarella", price: 429, veg: false },
+                { id: 103, name: "Garlic Breadsticks", description: "With cheese dip", price: 149, veg: true },
+                { id: 104, name: "Pasta Alfredo", description: "Creamy white sauce pasta", price: 279, veg: true }
+            ]
+        },
+        {
+            id: 2,
+            name: "🌮 Taco Fiesta",
+            cuisine: "Mexican, Tex-Mex",
+            rating: 4.3,
+            priceForTwo: 550,
+            image: "https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=400&h=200&fit=crop",
+            menu: [
+                { id: 201, name: "Crunchy Tacos", description: "3 pcs with salsa", price: 249, veg: true },
+                { id: 202, name: "Chicken Quesadilla", description: "Grilled chicken & cheese", price: 349, veg: false },
+                { id: 203, name: "Nachos Supreme", description: "Loaded with beans & cheese", price: 299, veg: true },
+                { id: 204, name: "Churros", description: "Cinnamon sugar dessert", price: 179, veg: true }
+            ]
+        },
+        {
+            id: 3,
+            name: "🍣 Sushi Zen",
+            cuisine: "Japanese, Sushi",
+            rating: 4.7,
+            priceForTwo: 1200,
+            image: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400&h=200&fit=crop",
+            menu: [
+                { id: 301, name: "California Roll", description: "8 pcs, avocado & crab", price: 499, veg: false },
+                { id: 302, name: "Salmon Nigiri", description: "Fresh salmon", price: 599, veg: false },
+                { id: 303, name: "Edamame", description: "Steamed soybeans", price: 199, veg: true },
+                { id: 304, name: "Miso Soup", description: "Traditional soup", price: 129, veg: true }
+            ]
+        },
+        {
+            id: 4,
+            name: "🍛 Bombay Tiffin",
+            cuisine: "Indian, North Indian",
+            rating: 4.6,
+            priceForTwo: 380,
+            image: "https://images.unsplash.com/photo-1585937421612-70a008356cbe?w=400&h=200&fit=crop",
+            menu: [
+                { id: 401, name: "Butter Chicken", description: "Creamy tomato gravy", price: 349, veg: false },
+                { id: 402, name: "Paneer Butter Masala", description: "Soft paneer cubes", price: 299, veg: true },
+                { id: 403, name: "Garlic Naan", description: "Freshly baked", price: 49, veg: true },
+                { id: 404, name: "Gulab Jamun", description: "2 pcs", price: 99, veg: true }
+            ]
+        },
+        {
+            id: 5,
+            name: "🥗 Green Bowl",
+            cuisine: "Healthy, Salads, Bowls",
+            rating: 4.2,
+            priceForTwo: 480,
+            image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=200&fit=crop",
+            menu: [
+                { id: 501, name: "Quinoa Power Bowl", description: "Avocado, chickpeas", price: 349, veg: true },
+                { id: 502, name: "Grilled Chicken Salad", description: "Lemon herb dressing", price: 399, veg: false },
+                { id: 503, name: "Smoothie Bowl", description: "Acai berries", price: 279, veg: true },
+                { id: 504, name: "Cold Pressed Juice", description: "Orange & beetroot", price: 149, veg: true }
+            ]
+        }
+    ];
+
+    // Cart state: array of { id, name, price, quantity, restaurantId, restaurantName, itemId }
+    let cart = [];
+    let currentRestaurantId = null;    // track which resto menu is open
+
+    // Helper: update cart badge & local storage
+    function updateCartUI() {
+        const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+        document.getElementById('cartCountBadge').innerText = totalItems;
+        renderCartSidebar();
+    }
+
+    // Add item to cart (group by same itemId & restaurantId)
+    function addToCart(restaurantId, restaurantName, item) {
+        const existingIndex = cart.findIndex(cartItem => cartItem.itemId === item.id && cartItem.restaurantId === restaurantId);
+        if (existingIndex !== -1) {
+            cart[existingIndex].quantity += 1;
+            showToast(`➕ ${item.name} quantity increased (${cart[existingIndex].quantity})`);
+        } else {
+            cart.push({
+                id: Date.now() + Math.random(),
+                restaurantId: restaurantId,
+                restaurantName: restaurantName,
+                itemId: item.id,
+                name: item.name,
+                price: item.price,
+                quantity: 1
+            });
+            showToast(`🍽️ Added ${item.name} to cart`);
+        }
+        updateCartUI();
+    }
+
+    // remove or decrease cart item
+    function updateCartItemQuantity(cartIndex, newQuantity) {
+        if (newQuantity <= 0) {
+            cart.splice(cartIndex, 1);
+        } else {
+            cart[cartIndex].quantity = newQuantity;
+        }
+        updateCartUI();
+    }
+
+    // render cart sidebar dynamically
+    function renderCartSidebar() {
+        const cartItemsContainer = document.getElementById('cartItemsList');
+        if (!cartItemsContainer) return;
+        if (cart.length === 0) {
+            cartItemsContainer.innerHTML = '<div class="empty-cart">Your cart is empty 🍽️</div>';
+            document.getElementById('cartTotalPrice').innerText = `Total: ₹0`;
+            return;
+        }
+        let total = 0;
+        let html = '';
+        cart.forEach((item, idx) => {
+            const itemTotal = item.price * item.quantity;
+            total += itemTotal;
+            html += `
+                <div class="cart-item">
+                    <div><strong>${item.name}</strong><br><span style="font-size:0.7rem;">${item.restaurantName}</span><br>₹${item.price} x ${item.quantity}</div>
+                    <div style="display:flex; gap:8px;">
+                        <button style="background:#eee; border:none; border-radius:30px; width:28px; cursor:pointer;" data-cartidx="${idx}" data-op="dec">−</button>
+                        <span>${item.quantity}</span>
+                        <button style="background:#eee; border:none; border-radius:30px; width:28px; cursor:pointer;" data-cartidx="${idx}" data-op="inc">+</button>
+                        <button style="background:#ffccc7; border:none; border-radius:30px; width:28px; cursor:pointer;" data-cartidx="${idx}" data-op="remove">🗑️</button>
+                    </div>
+                </div>
+            `;
+        });
+        cartItemsContainer.innerHTML = html;
+        document.getElementById('cartTotalPrice').innerHTML = `Total: ₹${total}`;
+        
+        // attach event listeners to dynamic buttons
+        document.querySelectorAll('[data-cartidx]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const idx = parseInt(btn.getAttribute('data-cartidx'));
+                const op = btn.getAttribute('data-op');
+                if (isNaN(idx)) return;
+                if (op === 'inc') {
+                    cart[idx].quantity += 1;
+                    updateCartUI();
+                } else if (op === 'dec') {
+                    const newQ = cart[idx].quantity - 1;
+                    updateCartItemQuantity(idx, newQ);
+                } else if (op === 'remove') {
+                    updateCartItemQuantity(idx, 0);
+                }
+                renderCartSidebar(); // re-render after state change
+            });
+        });
+    }
+
+    function showToast(msg, bg = "#1e293b") {
+        let toast = document.querySelector('.toast-msg');
+        if(toast) toast.remove();
+        toast = document.createElement('div');
+        toast.className = 'toast-msg';
+        toast.innerText = msg;
+        toast.style.background = bg;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 1800);
+    }
+
+    // Render all restaurants (first page)
+    function renderRestaurants() {
+        const grid = document.getElementById('restaurantsGrid');
+        grid.innerHTML = '';
+        restaurants.forEach(rest => {
+            const card = document.createElement('div');
+            card.className = 'restaurant-card';
+            card.innerHTML = `
+                <div class="restaurant-img" style="background-image: url('${rest.image}');"></div>
+                <div class="restaurant-info">
+                    <div class="restaurant-name">
+                        ${rest.name}
+                        <span class="rating">⭐ ${rest.rating}</span>
+                    </div>
+                    <div class="cuisine">${rest.cuisine}</div>
+                    <div class="price">₹${rest.priceForTwo} for two</div>
+                </div>
+            `;
+            card.addEventListener('click', () => showRestaurantMenu(rest.id));
+            grid.appendChild(card);
+        });
+    }
+
+    // Show menu of selected restaurant
+    function showRestaurantMenu(restId) {
+        const restaurant = restaurants.find(r => r.id === restId);
+        if (!restaurant) return;
+        currentRestaurantId = restId;
+        const menuViewDiv = document.getElementById('menuView');
+        const restaurantViewDiv = document.getElementById('restaurantView');
+        
+        let menuHtml = `
+            <div class="menu-view">
+                <button class="back-button" id="backToRestaurantsBtn">← Back to all restaurants</button>
+                <div class="resto-header">
+                    <h2>${restaurant.name}</h2>
+                    <p>${restaurant.cuisine} • ⭐ ${restaurant.rating} • ₹${restaurant.priceForTwo} for two</p>
+                </div>
+                <div class="menu-items-grid">
+        `;
+        restaurant.menu.forEach(item => {
+            menuHtml += `
+                <div class="menu-card">
+                    <div class="menu-details">
+                        <h4>${item.name} ${item.veg ? '🌱' : '🍗'}</h4>
+                        <p>${item.description}</p>
+                        <span class="price-tag">₹${item.price}</span>
+                    </div>
+                    <button class="add-btn" data-item-id="${item.id}" data-item-name="${item.name.replace(/'/g, "\\'")}" data-item-price="${item.price}">+ Add</button>
+                </div>
+            `;
+        });
+        menuHtml += `</div></div>`;
+        menuViewDiv.innerHTML = menuHtml;
+        restaurantViewDiv.style.display = 'none';
+        menuViewDiv.style.display = 'block';
+        
+        // attach add to cart events dynamically
+        document.querySelectorAll('.add-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const itemId = parseInt(btn.getAttribute('data-item-id'));
+                const itemName = btn.getAttribute('data-item-name');
+                const itemPrice = parseInt(btn.getAttribute('data-item-price'));
+                const menuItem = restaurant.menu.find(m => m.id === itemId);
+                if (menuItem) {
+                    addToCart(restaurant.id, restaurant.name, menuItem);
+                } else {
+                    // fallback
+                    addToCart(restaurant.id, restaurant.name, { id: itemId, name: itemName, price: itemPrice, description: "" });
+                }
+            });
+        });
+        
+        const backBtn = document.getElementById('backToRestaurantsBtn');
+        if(backBtn) backBtn.addEventListener('click', () => {
+            restaurantViewDiv.style.display = 'block';
+            menuViewDiv.style.display = 'none';
+            currentRestaurantId = null;
+        });
+    }
+    
+    // Cart Modal logic
+    const cartOverlay = document.getElementById('cartOverlay');
+    const cartIconBtn = document.getElementById('cartIconBtn');
+    const closeCartBtn = document.getElementById('closeCartBtn');
+    const checkoutBtn = document.getElementById('checkoutBtn');
+    
+    function openCart() {
+        renderCartSidebar();
+        cartOverlay.style.visibility = 'visible';
+        cartOverlay.style.opacity = '1';
+    }
+    function closeCart() {
+        cartOverlay.style.visibility = 'hidden';
+        cartOverlay.style.opacity = '0';
+    }
+    
+    cartIconBtn.addEventListener('click', openCart);
+    closeCartBtn.addEventListener('click', closeCart);
+    cartOverlay.addEventListener('click', (e) => {
+        if(e.target === cartOverlay) closeCart();
+    });
+    
+    checkoutBtn.addEventListener('click', () => {
+        if(cart.length === 0) {
+            showToast("🛒 Your cart is empty! Add some delicious items.", "#ff5e3a");
+            return;
+        }
+        const totalAmt = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+        showToast(`🎉 Order placed! Total ₹${totalAmt}. Delicious food incoming! 🚴‍♂️`, "#2e7d32");
+        cart = [];
+        updateCartUI();
+        closeCart();
+        renderCartSidebar();
+    });
+    
+    // initial load
+    renderRestaurants();
+    updateCartUI();
+    
+    // add some style for card image background
+    const styleAdd = document.createElement('style');
+    styleAdd.textContent = `
+        .restaurant-img {
+            background-size: cover;
+            background-position: center;
+            transition: transform 0.3s ease;
+        }
+        .restaurant-card:hover .restaurant-img {
+            transform: scale(1.02);
+        }
+        button { cursor: pointer; font-family: inherit; }
+        .cart-sidebar button { border: none; background: #f0f0f0; font-weight: bold; }
+        .cart-sidebar button:hover { background: #ffe0cc; }
+    `;
+    document.head.appendChild(styleAdd);
+</script>
+</body>
+</html>
